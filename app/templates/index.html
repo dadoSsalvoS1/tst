@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Stats Cards -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex flex-row items-center">
+            <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
+                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <div class="ml-4">
+                <h4 class="text-lg font-semibold text-gray-700">Media Files</h4>
+                <p class="text-2xl font-bold text-gray-900">{{ media_count }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex flex-row items-center">
+            <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
+                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <div class="ml-4">
+                <h4 class="text-lg font-semibold text-gray-700">Channels</h4>
+                <p class="text-2xl font-bold text-gray-900">{{ channel_count }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex flex-row items-center">
+            <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
+                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+            </div>
+            <div class="ml-4">
+                <h4 class="text-lg font-semibold text-gray-700">Categories</h4>
+                <p class="text-2xl font-bold text-gray-900">{{ category_count }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-8 bg-white rounded-lg shadow-lg p-6">
+    <h3 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h3>
+    <div class="flex space-x-4">
+        <form action="/api/scan" method="post">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">
+                Scan Media Library Now
+            </button>
+        </form>
+        <a href="/admin/channels" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out">
+            Manage Channels
+        </a>
+    </div>
+    <p class="mt-4 text-sm text-gray-500">
+        Scanning will search the configured media directory for new video files. It runs in the background.
+    </p>
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+    <!-- Left Column: Forms -->
+    <div class="space-y-8">
+        <!-- Create Category -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Create Category</h2>
+            <form action="/admin/categories/create" method="POST">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="cat_name">
+                        Category Name
+                    </label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                           id="cat_name" name="name" type="text" placeholder="e.g. Movies" required>
+                </div>
+                <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
+                    Add Category
+                </button>
+            </form>
+        </div>
+
+        <!-- Create Channel -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Create Channel</h2>
+            <form action="/admin/channels/create" method="POST">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="name">
+                        Channel Name
+                    </label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                           id="name" name="name" type="text" placeholder="e.g. My Movie Channel" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="category">
+                        Category
+                    </label>
+                    <select class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            id="category" name="category_id" required>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="media">
+                        Assign Media File
+                    </label>
+                    <select class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            id="media" name="media_id" required>
+                        {% for media in media_files %}
+                        <option value="{{ media.id }}">{{ media.filename }} ({{ (media.size / 1024 / 1024)|round(2) }} MB)</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
+                    Create Channel
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right Column: List -->
+    <div class="bg-white rounded-lg shadow-lg p-6 overflow-y-auto" style="max-height: 80vh;">
+        <h2 class="text-xl font-bold mb-4 text-gray-800">Channel List</h2>
+
+        {% for cat in categories %}
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-indigo-600 border-b-2 border-indigo-100 mb-2 pb-1">{{ cat.name }}</h3>
+            {% if cat.channels %}
+                <ul class="space-y-2">
+                    {% for channel in cat.channels %}
+                    <li class="flex items-center justify-between bg-gray-50 p-2 rounded hover:bg-gray-100 transition">
+                        <div class="flex items-center">
+                            <span class="text-gray-500 mr-2 text-sm">#{{ channel.id }}</span>
+                            <span class="font-medium text-gray-800">{{ channel.name }}</span>
+                        </div>
+                        <span class="text-xs text-gray-500 bg-gray-200 rounded px-2 py-1">
+                            {{ channel.media_links|length }} Files
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-sm text-gray-400 italic">No channels in this category.</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        {% if not categories %}
+        <p class="text-gray-500 text-center py-8">No categories found. Create one to get started.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

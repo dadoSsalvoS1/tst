@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corporate IPTV Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for modern feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+
+    <nav class="bg-gray-800 p-4 shadow-lg fixed w-full z-10 top-0">
+        <div class="container mx-auto flex items-center justify-between flex-wrap">
+            <div class="flex items-center flex-shrink-0 text-white mr-6">
+                <span class="font-semibold text-xl tracking-tight">Corporate IPTV</span>
+            </div>
+            <div class="w-full block flex-grow lg:flex lg:items-center lg:w-auto">
+                <div class="text-sm lg:flex-grow">
+                    <a href="/admin" class="block mt-4 lg:inline-block lg:mt-0 text-gray-200 hover:text-white mr-4">
+                        Dashboard
+                    </a>
+                    <a href="/admin/channels" class="block mt-4 lg:inline-block lg:mt-0 text-gray-200 hover:text-white mr-4">
+                        Channels & Media
+                    </a>
+                    <a href="/playlist.m3u8" target="_blank" class="block mt-4 lg:inline-block lg:mt-0 text-blue-300 hover:text-blue-100">
+                        View M3U8 Playlist
+                    </a>
+                </div>
+                <div>
+                    <button onclick="triggerScan()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm transition duration-150 ease-in-out transform hover:scale-105">
+                        Run Scan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="scan-notification" class="hidden fixed bottom-4 right-4 bg-green-500 text-white px-6 py-4 rounded shadow-lg transform transition-all duration-500 translate-y-full">
+        Scan started! Check back in a moment.
+    </div>
+
+    <script>
+        function triggerScan() {
+            fetch('/api/scan', { method: 'POST' })
+            .then(response => {
+                if (response.ok) {
+                    const notif = document.getElementById('scan-notification');
+                    notif.classList.remove('hidden', 'translate-y-full');
+                    setTimeout(() => {
+                        notif.classList.add('translate-y-full');
+                        setTimeout(() => notif.classList.add('hidden'), 500);
+                        setTimeout(() => location.reload(), 2000);
+                    }, 3000);
+                } else {
+                    alert("Scan failed to start.");
+                }
+            })
+            .catch(err => console.error(err));
+        }
+    </script>
+
+    <div class="container mx-auto mt-24 px-4">
+        {% block content %}{% endblock %}
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+jinja2
+python-multipart
+aiofiles
+watchdog
+httpx
+pytest
+pydantic-settings
