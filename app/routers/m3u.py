@@ -3,6 +3,8 @@ from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Channel, Category, ChannelMediaLink
+from app.config import settings
+from app.utils import get_local_ip
 
 # ==============================================================================
 # M3U GENERATOR
@@ -18,7 +20,7 @@ from app.models import Channel, Category, ChannelMediaLink
 # Logic:
 # - Queries all channels, joined with categories for grouping.
 # - Constructs the #EXTINF metadata line for each channel.
-# - Appends the stream URL pointing to our local streaming endpoint.
+# - Appends the stream URL pointing to our local streaming endpoint using the LAN IP.
 # ==============================================================================
 
 router = APIRouter()
@@ -27,7 +29,7 @@ router = APIRouter()
 def generate_playlist(request: Request, db: Session = Depends(get_db)):
     """
     Generate dynamic M3U8 playlist.
-    - Ensures base URL is correct (handles proxies, different ports).
+    - Ensures base URL uses the LAN IP for compatibility with external devices (Smart TVs).
     - Checks for relative logo paths and makes them absolute.
     - Only includes channels that have associated media files.
     """
@@ -35,8 +37,19 @@ def generate_playlist(request: Request, db: Session = Depends(get_db)):
 
     lines = ["#EXTM3U"]
 
-    # Base URL construction for stream links
-    base_url = str(request.base_url).rstrip("/")
+    # Use LAN IP instead of localhost/127.0.0.1 if possible
+    local_ip = get_local_ip()
+    port = settings.PORT
+    scheme = request.url.scheme
+
+    # Check if request.base_url host is localhost/127.0.0.1
+    host = request.url.hostname
+
+    if host in ["localhost", "127.0.0.1", "0.0.0.0"]:
+        base_url = f"{scheme}://{local_ip}:{port}"
+    else:
+        # Respect the incoming request (e.g. if accessed via a reverse proxy or public domain)
+        base_url = str(request.base_url).rstrip("/")
 
     for channel in channels:
         # Determine the primary media file for the channel.

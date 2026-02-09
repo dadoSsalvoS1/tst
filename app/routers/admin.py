@@ -5,6 +5,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Category, Channel, MediaFile, ChannelMediaLink
+from app.config import settings
+from app.utils import get_local_ip
 
 # ==============================================================================
 # ADMIN INTERFACE
@@ -29,11 +31,18 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
     channel_count = db.query(Channel).count()
     category_count = db.query(Category).count()
 
+    # Get LAN URL
+    local_ip = get_local_ip()
+    port = settings.PORT
+    scheme = request.url.scheme
+    playlist_url = f"{scheme}://{local_ip}:{port}/playlist.m3u8"
+
     return templates.TemplateResponse("index.html", {
         "request": request,
         "media_count": media_count,
         "channel_count": channel_count,
-        "category_count": category_count
+        "category_count": category_count,
+        "playlist_url": playlist_url
     })
 
 @router.get("/admin/channels", response_class=HTMLResponse)
