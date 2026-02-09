@@ -5,12 +5,25 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Category, Channel, MediaFile, ChannelMediaLink
 
+# ==============================================================================
+# ADMIN INTERFACE
+# ==============================================================================
+# This router handles the web-based admin panel.
+# - Uses Jinja2 templates (Server-Side Rendering) for simplicity and speed.
+# - Provides CRUD forms for managing channels and categories.
+# - The UI is designed to be responsive (using Tailwind CSS via CDN).
+#
+# Future Enhancements:
+# - Add authentication (Login/Password).
+# - Add drag-and-drop playlist reordering.
+# ==============================================================================
+
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/admin", response_class=HTMLResponse)
 def dashboard(request: Request, db: Session = Depends(get_db)):
-    """Admin Dashboard."""
+    """Admin Dashboard View."""
     media_count = db.query(MediaFile).count()
     channel_count = db.query(Channel).count()
     category_count = db.query(Category).count()
@@ -24,7 +37,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/admin/channels", response_class=HTMLResponse)
 def manage_channels(request: Request, db: Session = Depends(get_db)):
-    """Channel Management Interface."""
+    """Channel Management View."""
     categories = db.query(Category).all()
     channels = db.query(Channel).all()
     media_files = db.query(MediaFile).all()
@@ -44,7 +57,11 @@ def create_channel_form(
     media_id: int = Form(...),
     db: Session = Depends(get_db)
 ):
-    """Handle form submission for creating a channel."""
+    """
+    Handle POST request to create a new channel.
+    - Creates the Channel record.
+    - Creates a ChannelMediaLink to associate the selected media file.
+    """
     # Create Channel
     new_channel = Channel(name=name, category_id=category_id)
     db.add(new_channel)
@@ -64,7 +81,11 @@ def create_category_form(
     name: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    """Handle form submission for creating a category."""
+    """
+    Handle POST request to create a new category.
+    - Generates a slug automatically.
+    - Prevents duplicates (though the DB constraint handles this too).
+    """
     # Check if exists
     if not db.query(Category).filter(Category.name == name).first():
         new_cat = Category(name=name, slug=name.lower().replace(" ", "-"))

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.database import get_db
 from app.models import Category, Channel, MediaFile, ChannelMediaLink
@@ -19,8 +19,7 @@ class CategoryCreate(CategoryBase):
 
 class CategoryOut(CategoryBase):
     id: int
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ChannelBase(BaseModel):
     name: str
@@ -36,20 +35,17 @@ class MediaFileOut(BaseModel):
     filename: str
     path: str
     size: int
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ChannelMediaLinkOut(BaseModel):
     media_file: MediaFileOut
     order: int
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ChannelOut(ChannelBase):
     id: int
     media_links: List[ChannelMediaLinkOut] = []
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # --- Endpoints ---
 

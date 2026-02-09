@@ -3,18 +3,37 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
 
+# ==============================================================================
+# DATA MODELS (ORM)
+# ==============================================================================
+# The system uses SQLAlchemy ORM to map Python classes to SQLite tables.
+# The schema is designed for flexibility, allowing multiple media files to be
+# associated with a single channel (playlist style) and organized into
+# categories.
+#
+# Relationships:
+# - Category (1) -> (Many) Channel
+# - Channel (1) -> (Many) ChannelMediaLink (Order) -> (1) MediaFile
+# - MediaFile (1) -> (Many) ChannelMediaLink
+# ==============================================================================
+
 class MediaFile(Base):
-    """Represents a physical video file on the disk."""
+    """
+    Represents a physical video file on the disk.
+    - Stores metadata like size, duration (future), and path.
+    - Path must be unique to prevent duplicate entries for the same file.
+    - `filename` is indexed for faster searching.
+    """
     __tablename__ = "media_files"
 
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String, index=True)
     path = Column(String, unique=True, index=True)
     size = Column(Integer)
-    duration = Column(Integer, nullable=True)  # Duration in seconds
+    duration = Column(Integer, nullable=True)  # Duration in seconds (placeholder for ffmpeg integration)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # Relationship to ChannelMediaLink
+    # Relationship: A file can belong to many channels via the link table
     channel_links = relationship("ChannelMediaLink", back_populates="media_file")
 
     def __repr__(self):
@@ -22,7 +41,11 @@ class MediaFile(Base):
 
 
 class Category(Base):
-    """Represents a category of channels (e.g., Movies, Sports)."""
+    """
+    Represents a grouping of channels (e.g., Movies, Sports, News).
+    - `slug` is used for potential URL-friendly routing in the future.
+    - `icon_url` allows categories to have visual representation in UI.
+    """
     __tablename__ = "categories"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -30,7 +53,7 @@ class Category(Base):
     slug = Column(String, unique=True, index=True)
     icon_url = Column(String, nullable=True)
 
-    # Relationship to Channels
+    # Relationship: Deleting a category deletes all its channels (cascade)
     channels = relationship("Channel", back_populates="category", cascade="all, delete-orphan")
 
     def __repr__(self):
@@ -38,7 +61,12 @@ class Category(Base):
 
 
 class Channel(Base):
-    """Represents an IPTV channel."""
+    """
+    Represents an IPTV channel.
+    - Has a `number` field for traditional TV listing ordering (Channel 1, 2, etc.).
+    - Linked to a single Category.
+    - Can contain multiple media files (via `media_links`) to form a playlist.
+    """
     __tablename__ = "channels"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -51,6 +79,7 @@ class Channel(Base):
     category = relationship("Category", back_populates="channels")
 
     # Relationship to MediaFiles (via Link table)
+    # Deleting a channel removes the links, but NOT the media files themselves.
     media_links = relationship("ChannelMediaLink", back_populates="channel", cascade="all, delete-orphan")
 
     def __repr__(self):
@@ -58,7 +87,11 @@ class Channel(Base):
 
 
 class ChannelMediaLink(Base):
-    """Link table to associate MediaFiles with Channels (Many-to-Many with order)."""
+    """
+    Association table between Channels and MediaFiles.
+    - Allows a Many-to-Many relationship with additional metadata (`order`).
+    - `order` determines the sequence of playback for multi-file channels.
+    """
     __tablename__ = "channel_media_links"
 
     id = Column(Integer, primary_key=True, index=True)
