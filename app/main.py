@@ -16,6 +16,13 @@ from app.watcher import start_watcher
 from app.services.media_service import sync_media_files
 from app.database import SessionLocal
 import threading
+import sys
+import asyncio
+
+# Fix for Windows "ProactorEventLoop" closing error (WinError 10054)
+# This is a known issue with Uvicorn/FastAPI on Windows.
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # ==============================================================================
 # ARCHITECTURE OVERVIEW
@@ -173,6 +180,11 @@ def stream_video(
         except ValueError:
             # Fallback for malformed headers
             start = 0
+            end = file_size - 1
+
+        # RFC 7233: If the value is greater than or equal to the current length of the
+        # representation data, the byte range is interpreted as the remainder.
+        if end >= file_size:
             end = file_size - 1
 
         # Validation
