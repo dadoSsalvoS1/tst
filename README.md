@@ -8,7 +8,7 @@ A high-performance, locally-hosted IPTV system designed for corporate environmen
     *   **Auto-Discovery:** Automatically detects new video files added to the `media/` folder.
     *   **Live Watching:** Instantaneously updates the database when files are moved, renamed, or deleted.
     *   **Folder Support:** Recursive scanning allows you to drop entire folder structures into the media library.
-*   **Dynamic Channel Management:** Create channels, assign videos, and categorize content via a responsive web interface.
+*   **Dynamic Channel Management:** Create channels, assign videos (support for multiple files per channel), and categorize content via a responsive web interface.
 *   **High Performance Streaming:** Supports HTTP Range requests for smooth playback and seeking (scrubbing).
 *   **Standard M3U8 Output:** Generates compliant playlists for VLC, TiviMate, and other players.
 *   **Restricted Access:** Designed for secure, internal network usage.

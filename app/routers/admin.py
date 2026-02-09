@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -54,13 +55,13 @@ def create_channel_form(
     request: Request,
     name: str = Form(...),
     category_id: int = Form(...),
-    media_id: int = Form(...),
+    media_ids: List[int] = Form([]), # Default to empty list if none selected
     db: Session = Depends(get_db)
 ):
     """
     Handle POST request to create a new channel.
     - Creates the Channel record.
-    - Creates a ChannelMediaLink to associate the selected media file.
+    - Creates ChannelMediaLinks to associate selected media files.
     """
     # Create Channel
     new_channel = Channel(name=name, category_id=category_id)
@@ -68,11 +69,26 @@ def create_channel_form(
     db.commit()
     db.refresh(new_channel)
 
-    # Link Media
-    link = ChannelMediaLink(channel_id=new_channel.id, media_file_id=media_id, order=0)
-    db.add(link)
+    # Link Media Files
+    for idx, media_id in enumerate(media_ids):
+        link = ChannelMediaLink(
+            channel_id=new_channel.id,
+            media_file_id=media_id,
+            order=idx
+        )
+        db.add(link)
+
     db.commit()
 
+    return RedirectResponse(url="/admin/channels", status_code=303)
+
+@router.post("/admin/channels/delete/{channel_id}", response_class=RedirectResponse)
+def delete_channel(channel_id: int, db: Session = Depends(get_db)):
+    """Deletes a channel."""
+    channel = db.query(Channel).filter(Channel.id == channel_id).first()
+    if channel:
+        db.delete(channel)
+        db.commit()
     return RedirectResponse(url="/admin/channels", status_code=303)
 
 @router.post("/admin/categories/create", response_class=HTMLResponse)
@@ -92,4 +108,13 @@ def create_category_form(
         db.add(new_cat)
         db.commit()
 
+    return RedirectResponse(url="/admin/channels", status_code=303)
+
+@router.post("/admin/categories/delete/{category_id}", response_class=RedirectResponse)
+def delete_category(category_id: int, db: Session = Depends(get_db)):
+    """Deletes a category (and cascades to channels)."""
+    category = db.query(Category).filter(Category.id == category_id).first()
+    if category:
+        db.delete(category)
+        db.commit()
     return RedirectResponse(url="/admin/channels", status_code=303)

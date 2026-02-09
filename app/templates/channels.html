@@ -36,29 +36,48 @@
 
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2" for="category">
-                        Category
+                        Category (Select Existing)
                     </label>
-                    <select class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            id="category" name="category_id" required>
-                        {% for cat in categories %}
-                        <option value="{{ cat.id }}">{{ cat.name }}</option>
-                        {% endfor %}
-                    </select>
+                    <div class="relative">
+                        <select class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                id="category" name="category_id" required>
+                            <option value="" disabled selected>Select a category...</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Or create a new one above.</p>
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="media">
-                        Assign Media File
+                    <label class="block text-gray-700 text-sm font-bold mb-2">
+                        Assign Media Files (Select All / Partial)
                     </label>
-                    <select class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            id="media" name="media_id" required>
+
+                    <div class="flex items-center mb-2">
+                        <input type="checkbox" id="select-all-media" class="mr-2 leading-tight h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" onchange="toggleSelectAll(this)">
+                        <label for="select-all-media" class="text-sm text-gray-600 cursor-pointer select-none">Select All</label>
+                    </div>
+
+                    <div class="border rounded p-2 overflow-y-auto max-h-60 bg-gray-50 shadow-inner">
+                        {% if not media_files %}
+                            <p class="text-sm text-gray-500 p-2">No media files found. Run a scan first.</p>
+                        {% endif %}
                         {% for media in media_files %}
-                        <option value="{{ media.id }}">{{ media.filename }} ({{ (media.size / 1024 / 1024)|round(2) }} MB)</option>
+                        <div class="flex items-center py-1 hover:bg-gray-100 rounded px-1 transition">
+                            <input type="checkbox" name="media_ids" value="{{ media.id }}" class="media-checkbox mr-2 leading-tight h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <span class="text-sm text-gray-700 truncate" title="{{ media.filename }}">
+                                {{ media.filename }}
+                                <span class="text-xs text-gray-500">({{ (media.size / 1024 / 1024)|round(2) }} MB)</span>
+                            </span>
+                        </div>
                         {% endfor %}
-                    </select>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Selected files will be played in order.</p>
                 </div>
 
-                <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
+                <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full" type="submit">
                     Create Channel
                 </button>
             </form>
@@ -71,30 +90,62 @@
 
         {% for cat in categories %}
         <div class="mb-6">
-            <h3 class="text-lg font-semibold text-indigo-600 border-b-2 border-indigo-100 mb-2 pb-1">{{ cat.name }}</h3>
+            <div class="flex justify-between items-center border-b-2 border-indigo-100 mb-2 pb-1">
+                <h3 class="text-lg font-semibold text-indigo-600">{{ cat.name }}</h3>
+                <form action="/admin/categories/delete/{{ cat.id }}" method="POST" onsubmit="return confirm('Are you sure you want to delete category &quot;{{ cat.name }}&quot; and ALL its channels?');">
+                    <button type="submit" class="text-red-400 hover:text-red-600 text-xs font-bold uppercase tracking-wider flex items-center group">
+                        <svg class="h-3 w-3 mr-1 group-hover:animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete
+                    </button>
+                </form>
+            </div>
+
             {% if cat.channels %}
                 <ul class="space-y-2">
                     {% for channel in cat.channels %}
-                    <li class="flex items-center justify-between bg-gray-50 p-2 rounded hover:bg-gray-100 transition">
-                        <div class="flex items-center">
-                            <span class="text-gray-500 mr-2 text-sm">#{{ channel.id }}</span>
-                            <span class="font-medium text-gray-800">{{ channel.name }}</span>
+                    <li class="flex items-center justify-between bg-gray-50 p-2 rounded hover:bg-gray-100 transition shadow-sm border border-gray-100">
+                        <div class="flex items-center overflow-hidden">
+                            <span class="text-gray-400 mr-2 text-xs font-mono">#{{ channel.id }}</span>
+                            <span class="font-medium text-gray-800 truncate">{{ channel.name }}</span>
                         </div>
-                        <span class="text-xs text-gray-500 bg-gray-200 rounded px-2 py-1">
-                            {{ channel.media_links|length }} Files
-                        </span>
+                        <div class="flex items-center flex-shrink-0 ml-2">
+                            <span class="text-xs text-gray-500 bg-gray-200 rounded px-2 py-1 mr-2" title="{{ channel.media_links|length }} files linked">
+                                {{ channel.media_links|length }} Files
+                            </span>
+                            <form action="/admin/channels/delete/{{ channel.id }}" method="POST" onsubmit="return confirm('Delete channel &quot;{{ channel.name }}&quot;?');">
+                                <button type="submit" class="text-red-500 hover:text-red-700 bg-white hover:bg-red-50 rounded-full p-1 transition" title="Delete Channel">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
                     </li>
                     {% endfor %}
                 </ul>
             {% else %}
-                <p class="text-sm text-gray-400 italic">No channels in this category.</p>
+                <p class="text-sm text-gray-400 italic pl-2">No channels in this category.</p>
             {% endif %}
         </div>
         {% endfor %}
 
         {% if not categories %}
-        <p class="text-gray-500 text-center py-8">No categories found. Create one to get started.</p>
+        <div class="text-center py-10 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <p class="mt-2 text-sm text-gray-500">No categories found. Create one to get started.</p>
+        </div>
         {% endif %}
     </div>
 </div>
+
+<script>
+function toggleSelectAll(source) {
+    const checkboxes = document.querySelectorAll('.media-checkbox');
+    checkboxes.forEach(cb => cb.checked = source.checked);
+}
+</script>
 {% endblock %}
